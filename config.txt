@@ -1,0 +1,12 @@
+### PARAMETER FILE FOR NNDIST PROGRAMS ###
+input_catalogue: example_catalogue.txt
+minimum_magnitude: 2.5
+unit_for_geog_coordinates_[km,degrees]: km
+fractal_dimension: 1.6
+parameter_w: 1.0
+parameter_p: 0.5
+parameter_q: 0.5
+parameter_eta0: 0.00001
+parameter_alpha0: 0.0
+parameter_npert: 30
+output_file: output.txt 

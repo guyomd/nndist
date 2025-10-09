@@ -1,0 +1,20 @@
+###   PARAMETER FILE FOR NNDIST PROGRAMS   ###
+###   TEST CONFIGURATION FILE FOR CATALOG  ###
+###   PRODUCED BY GU ET AL (2013) AND USED ###
+###   BY ZALIAPIN & BEN-ZION (2020)        ###
+###                                        ###
+###   THESE LAST AUTHORS IDENTIFIED AN     ###
+###   AVERAGE PROPORTION OF BACKGROUND     ###
+###   EVENTS EQUAL TO 0.26 +/- 0.003       ###
+##############################################
+input_catalogue: etas_catal_2d.34_nndist_starting_day366.txt
+minimum_magnitude: 2.5
+unit_for_geog_coordinates_[km,degrees]: km
+fractal_dimension: 1.6
+parameter_w: 0.0
+parameter_p: 0.5
+parameter_q: 0.5
+parameter_eta0: 0.1
+parameter_alpha0: 0.0
+parameter_npert: 10000 
+output_file: output.txt 
