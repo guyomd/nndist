@@ -6,10 +6,10 @@ import pygmt
 
 if __name__ == "__main__":
 
-    #configfile = 'config_ZBZ2020_alpha0.txt'  # Configuration with parameter alpha0 = 0.0
+    #configfile = 'config_ZBZ2020_alpha0.0.txt'  # Configuration with parameter alpha0 = 0.0
     configfile = 'config_ZBZ2020_alpha0.1.txt'  # Configuration with parameter alpha0 = 0.1
 
-    #resultsfile = 'output_declust_ZBZ2020_alpha0.txt'  # Results obtained with parameter alpha0 = 0.0
+    #resultsfile = 'output_declust_ZBZ2020_alpha0.0.txt'  # Results obtained with parameter alpha0 = 0.0
     resultsfile = 'output_declust_ZBZ2020_alpha0.1.txt'  # Results obtained with parameter alpha0 = 0.1
 
 
