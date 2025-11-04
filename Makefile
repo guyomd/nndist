@@ -1,7 +1,7 @@
 CXX = g++
 LIBS = strutils.o arrayutils.o fileutils.o nnanalysis.o nnstats.o
 INCDIR = ./include
-BOOSTDIR = /home/b94678/Code/Cpp/boost_1_82_0 
+BOOSTDIR = ../boost_1_82_0 
 SRCDIR = ./src
 BINDIR = ./bin
 
