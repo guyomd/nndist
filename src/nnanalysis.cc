@@ -167,7 +167,6 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
         y_k[i] = lats[i0[i]];
         z_k[i] = deps[i0[i]];
     }
-    //static thread_local std::mt19937 rng(std::random_device{}());
     std::uniform_real_distribution<double> unif(0.0, 1.0);
     std::valarray<std::valarray<double>> nnreal(std::valarray<double>(inf, nev), npert);
     double dt;
@@ -252,4 +251,103 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
         results[i] = {prob, isbng, prox, pow(10, avg_lognnd)};  // [prob_bgnd, is_bgnd, norm. prox., avg_nnd]
     }
     return results;
+}
+
+
+std::vector<double> Hypocenters::extractBgndEventTimes(const std::vector<std::vector<double>>& decluster_results) 
+{
+     /**
+     * Extract background event times from decluster results
+     * 
+     * @param dates All event occurrence times
+     * @param decluster_results Results from decluster method (each element: [prob_bgnd, is_bgnd, norm_prox, avg_nnd])
+     * @return Vector of occurrence times for events where is_bgnd == 1 (True)
+     */
+    std::vector<double> background_times;
+    size_t n = std::min(dates.size(), decluster_results.size());
+    
+    for (size_t i = 0; i < n; ++i) {
+        // Check if is_bgnd (index 1) is True (≈ 1.0)
+        if (decluster_results[i].size() >= 2 && decluster_results[i][1] > 0.5) {
+            background_times.push_back(dates[i]);
+        }
+    }
+    
+    // Sort the times
+    std::sort(background_times.begin(), background_times.end());
+    return background_times;
+}
+
+
+StatTestResult Hypocenters::testBgndStationarityBrownZhao(const std::vector<double>& background_times,
+                                                          int k,
+                                                          double alpha) 
+{
+    if (background_times.size() < 2) {
+        std::cout << "Warning: Insufficient background events (" << background_times.size() 
+                  << ") for Brown-Zhao test." << std::endl;
+        StatTestResult result;
+        result.test_name = "Brown-Zhao (2002) test";
+        result.statistic = 0.0;
+        result.p_value = 1.0;
+        result.is_stationary = true;
+        return result;
+    }
+    
+    return PoissonStationarityTests::brownZhaoTest(background_times, k, alpha);
+}
+
+
+StatTestResult Hypocenters::testBgndStationarityKS(const std::vector<double>& background_times,
+                                                   double alpha) 
+{
+    if (background_times.size() < 2) {
+        std::cout << "Warning: Insufficient background events (" << background_times.size() 
+                  << ") for Kolmogorov-Smirnov test." << std::endl;
+        StatTestResult result;
+        result.test_name = "Kolmogorov-Smirnov test";
+        result.statistic = 0.0;
+        result.p_value = 1.0;
+        result.is_stationary = true;
+        return result;
+    }
+    
+    return PoissonStationarityTests::kolmogorovSmirnovTest(background_times, alpha);
+}
+
+
+void Hypocenters::performStationarityTests(const std::vector<std::vector<double>>& decluster_results,
+                                           double alpha) 
+{
+    std::cout << "\n### STATIONARITY TESTS FOR BACKGROUND EVENTS ###" << std::endl;
+    
+    // Extract background events info
+    std::vector<double> background_times = extractBgndEventTimes(decluster_results);
+    
+    std::cout << "Total events: " << dates.size() << std::endl;
+    std::cout << "Background events: " << background_times.size() << std::endl;
+    if (background_times.size() > 0) {
+        std::cout << "Background event rate: " << 
+                     static_cast<double>(background_times.size()) / dates.size() * 100.0 
+                  << "%" << std::endl;
+        std::cout << "Time span: " << background_times.front() << " to " 
+                  << background_times.back() << std::endl;
+    }
+    
+    if (background_times.size() < 2) {
+        std::cout << "\nInsufficient background events for statistical tests." << std::endl;
+        return;
+    }
+    
+    // Perform Brown-Zhao tests:
+    StatTestResult bz_result = testBgndStationarityBrownZhao(background_times, 10, alpha);
+    bz_result.printTestResults();
+    
+    bz_result = testBgndStationarityBrownZhao(background_times, 100, alpha);
+    bz_result.printTestResults();
+
+    // // Perform Kolmogorov-Smirnov test
+    StatTestResult ks_result = testBgndStationarityKS(background_times, alpha);
+    ks_result.printTestResults();
+    
 }

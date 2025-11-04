@@ -88,15 +88,15 @@ StatTestResult PoissonStationarityTests::kolmogorovSmirnovTest(const std::vector
     // Compute transformed times:
     std::vector<double> u(n), unif(n);  
     for (size_t i = 0; i < n;  ++i) {
-        u[i] = (times[i] - tmin) / (tmax - tmin);  // transformed observed times
-        unif[i] = i * ((tmax - tmin) / (n - 1));  // uniform theoretical times
+        u[i] = (times[i] - tmin) / (tmax - tmin);  
     }
     
     // Compute empirical and theoretical (uniform) CDF:
     std::vector<double> u_CDF(n), theo_CDF(n), diff(n);
+    double nd = static_cast<double>(n);
     for (size_t i = 0; i < n;  ++i) {
-        u_CDF[i] = u[i] / u.back();
-        theo_CDF[i] = unif[i] / unif.back();
+        u_CDF[i] = static_cast<double>(i) / (nd - 1.0);
+        theo_CDF[i] = u[i];
         diff[i] = std::abs(u_CDF[i] - theo_CDF[i]);
     }
  

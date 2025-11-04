@@ -12,6 +12,6 @@ OMP_NUM_THREADS=5 ./bin/nndecluster config_test.txt
 
 
 # To compile on Windows 11:
-g++.exe  src\strutils.cc src\arrayutils.cc src\fileutils.cc src\nnanalysis.cc src\nndistance.cc -O3 -fopenmp -I.\include -o .\bin\nndistance.exe
+g++.exe  src\strutils.cc src\arrayutils.cc src\fileutils.cc src\nnanalysis.cc src\nndistance.cc src\nnstats.cc -O3 -fopenmp -I.\include -IC:\Users\b94678\Documents\Gratuiciels\boost_1_82_0\boost -o .\bin\nndistance.exe
 
-g++.exe  src\strutils.cc src\arrayutils.cc src\fileutils.cc src\nnanalysis.cc src\nndeclust.cc -O3 -fopenmp -I.\include -o .\bin\nndecluster.exe
+g++.exe  src\strutils.cc src\arrayutils.cc src\fileutils.cc src\nnanalysis.cc src\nndeclust.cc src\nnstats.cc -O3 -fopenmp -I.\include -IC:\Users\b94678\Documents\Gratuiciels\boost_1_82_0\boost -o .\bin\nndecluster.exe

@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstddef>
 #include <valarray>
+#include "nnstats.h"
 
 std::valarray<double> greatCircleDistance(double lat1, 
                                           double lon1, 
@@ -44,6 +45,18 @@ public:
                                                size_t npert, 
                                                double p = 0.5, 
                                                double q = 0.5);
+    
+    std::vector<double> extractBgndEventTimes(const std::vector<std::vector<double>>& decluster_results);
+
+    // Statistical tests for background events stationarity
+    StatTestResult testBgndStationarityBrownZhao(const std::vector<double>& background_times,
+                                                 int k,
+                                                 double alpha);
+    StatTestResult testBgndStationarityKS(const std::vector<double>& background_times,
+                                          double alpha);
+    void performStationarityTests(const std::vector<std::vector<double>>& decluster_results,
+                                  double alpha = 0.05);
+    
     size_t size() const;
 
     // Data members (public for simplicity, but you may want to make them private with accessors)

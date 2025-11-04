@@ -55,6 +55,10 @@ int main(int argc, char* argv[]) {
         std::time_t c_end = std::time(nullptr);
         double time_elapsed_s = std::difftime(c_end, c_start);
         std::cout << "CPU time used ~ " << time_elapsed_s << " s." << std::endl;
+        
+        // Perform stationarity tests on background events:
+        double test_alpha = 0.05;
+        events.performStationarityTests(results, test_alpha);
     }
     
     // Write results to output file:

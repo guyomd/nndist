@@ -1,10 +1,11 @@
 CXX = g++
-LIBS = strutils.o arrayutils.o fileutils.o nnanalysis.o
+LIBS = strutils.o arrayutils.o fileutils.o nnanalysis.o nnstats.o
 INCDIR = ./include
+BOOSTDIR = /home/b94678/Code/Cpp/boost_1_82_0 
 SRCDIR = ./src
 BINDIR = ./bin
 
-OPTS = -O3 -fopenmp -I$(INCDIR)
+OPTS = -O3 -fopenmp -I$(INCDIR) -I$(BOOSTDIR)
 
 all: nndistance nndecluster clean
 	@echo "\nDone. NNDISTANCE and NNDECLUSTER binaries stored in subdirectory $(BINDIR)\n"
@@ -27,12 +28,15 @@ fileutils.o: $(SRCDIR)/fileutils.cc
 nnanalysis.o: $(SRCDIR)/nnanalysis.cc 
 	$(CXX) $(OPTS) -c $(SRCDIR)/nnanalysis.cc 
 
-nndistance.o: $(SRCDIR)/nndistance.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc
-	$(CXX) $(OPTS) -c $(SRCDIR)/nndistance.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc
+nnstats.o: $(SRCDIR)/nnstats.cc 
+	$(CXX) $(OPTS) -c $(SRCDIR)/nnstats.cc 
 
-nndeclust.o: $(SRCDIR)/nndeclust.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc 
-	$(CXX) $(OPTS) -c $(SRCDIR)/nndeclust.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc
+nndistance.o: $(SRCDIR)/nndistance.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc $(SRCDIR)/nnstats.cc
+	$(CXX) $(OPTS) -c $(SRCDIR)/nndistance.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc $(SRCDIR)/nnstats.cc
+
+nndeclust.o: $(SRCDIR)/nndeclust.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc $(SRCDIR)/nnstats.cc
+	$(CXX) $(OPTS) -c $(SRCDIR)/nndeclust.cc $(SRCDIR)/strutils.cc $(SRCDIR)/arrayutils.cc $(SRCDIR)/fileutils.cc $(SRCDIR)/nnanalysis.cc $(SRCDIR)/nnstats.cc
 
 
 clean:
-	rm strutils.o arrayutils.o fileutils.o nnanalysis.o nndistance.o nndeclust.o
+	rm strutils.o arrayutils.o fileutils.o nnanalysis.o nnstats.o nndistance.o nndeclust.o
