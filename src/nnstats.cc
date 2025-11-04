@@ -1,0 +1,134 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <string>
+#include <cstdlib>
+#include <boost/math/distributions/chi_squared.hpp>
+#include <boost/math/distributions/kolmogorov_smirnov.hpp>
+#include "nnstats.h"
+
+
+
+double chiSquarePValue(double testStat, int degreesOfFreedom)
+{
+    boost::math::chi_squared_distribution<double> chiSquared(degreesOfFreedom);
+    double cdfValue = boost::math::cdf(chiSquared, testStat);
+    double pValue = 1.0 - cdfValue;
+    return pValue;
+}
+
+
+double ksPValue(double testStat, double n)
+{
+    boost::math::kolmogorov_smirnov_distribution<double> ks_dist(n);
+    double cdfValue = boost::math::cdf(ks_dist, testStat);
+    double pValue = 1.0 - cdfValue;
+    return pValue;
+}
+
+
+StatTestResult PoissonStationarityTests::brownZhaoTest(const std::vector<double>& occurrence_times, 
+                                                       int k,
+                                                       double alpha) 
+{
+    StatTestResult result;
+    result.test_name = "Brown-Zhao (2002) test: k=" + std::to_string(k) ;
+
+    std::vector<double> yk(k);
+    double ymean = 0;
+    double bzstat = 0;
+
+    // Clean and sort the data
+    std::vector<double> times = sortAndClean(occurrence_times);
+    int n = times.size();
+    double tmin = *std::min_element(times.begin(), times.end());
+    double tmax = *std::max_element(times.begin(), times.end());
+    double tsub = (tmax - tmin) / k;
+   
+    // Compute numbers in each (equal-duration sub-interval):
+    for (size_t i = 0; i < k; ++i) {
+        double tb = tmin + i * tsub;
+        double te = tmin + (i + 1) * tsub;
+        int count = 0;
+        auto lower = std::lower_bound(times.begin(), times.end(), tb);
+        auto upper = std::upper_bound(times.begin(), times.end(), te);
+        for (auto it = lower; it != upper; it++) {
+            count += 1;
+        }
+        yk[i] = std::sqrt(count + 3 / 8);
+        ymean += yk[i];
+    }
+    ymean /= k;
+
+    // Compute Brown & Zhao (2002) test statistics:
+    for (size_t i = 0; i < k; ++i) {
+        bzstat += 4 * std::pow(yk[i] - ymean, 2);
+    }
+    result.statistic = bzstat;
+    result.p_value = chiSquarePValue(bzstat, k - 1);
+    result.is_stationary = (result.p_value > alpha);
+    return result;
+}
+
+
+StatTestResult PoissonStationarityTests::kolmogorovSmirnovTest(const std::vector<double>& occurrence_times,
+                                                               double alpha) 
+{
+    // Clean and sort the data
+    std::vector<double> times = sortAndClean(occurrence_times);
+    int n = times.size();
+    double tmin = *std::min_element(times.begin(), times.end());
+    double tmax = *std::max_element(times.begin(), times.end());
+
+    StatTestResult result;
+    result.test_name = "One-sided Kolmogorov-Smirnov test (" + std::to_string(n) + " samples)";
+    
+    // Compute transformed times:
+    std::vector<double> u(n), unif(n);  
+    for (size_t i = 0; i < n;  ++i) {
+        u[i] = (times[i] - tmin) / (tmax - tmin);  // transformed observed times
+        unif[i] = i * ((tmax - tmin) / (n - 1));  // uniform theoretical times
+    }
+    
+    // Compute empirical and theoretical (uniform) CDF:
+    std::vector<double> u_CDF(n), theo_CDF(n), diff(n);
+    for (size_t i = 0; i < n;  ++i) {
+        u_CDF[i] = u[i] / u.back();
+        theo_CDF[i] = unif[i] / unif.back();
+        diff[i] = std::abs(u_CDF[i] - theo_CDF[i]);
+    }
+ 
+    result.statistic = *std::max_element(diff.begin(), diff.end());
+    result.p_value = ksPValue(result.statistic, static_cast<double>(n));
+    result.is_stationary = (result.p_value > alpha);
+    return result;
+}
+
+
+std::vector<double> PoissonStationarityTests::sortAndClean(const std::vector<double>& data) {
+    std::vector<double> cleaned = data;
+    std::sort(cleaned.begin(), cleaned.end());
+    
+    // Remove duplicates
+    auto it = std::unique(cleaned.begin(), cleaned.end());
+    cleaned.resize(std::distance(cleaned.begin(), it));
+    
+    return cleaned;
+}
+
+
+void StatTestResult::printTestResults() 
+{
+    std::cout << "\n=== " << test_name << " ===" << std::endl;
+    std::cout << "Test statistic: " << statistic << std::endl;
+    std::cout << "P-value: " << p_value << std::endl;
+    std::cout << "Result: ";
+    if (is_stationary) {
+        std::cout << "FAIL TO REJECT null hypothesis (process appears stationary)" << std::endl;
+    } else {
+        std::cout << "REJECT null hypothesis (process appears non-stationary)" << std::endl;
+    }
+    std::cout << std::endl;
+}
