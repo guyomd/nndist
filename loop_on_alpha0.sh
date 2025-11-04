@@ -1,8 +1,8 @@
 #!/bin/bash
 
 CONFIG_TEMPLATE=config_ZBZ2020_alpha0.1.txt
-NNDIST=/home/b94678/Code/Cpp/nndist/bin/nndistance
-NNDECLUST=/home/b94678/Code/Cpp/nndist/bin/nndecluster
+NNDIST=./nndistance
+NNDECLUST=./nndecluster
 
 for ALPHA in -1.0 -0.8 -0.6 -0.4 -0.2 0.0 0.2 0.4 0.6 0.8 1.0 0.1 0.3 0.5 0.7 0.9 -0.1 -0.3 -0.5 -0.7 -0.9;
 do
