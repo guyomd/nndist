@@ -234,7 +234,7 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
     
     thread_local std::mt19937 rng(std::random_device{}());
     std::vector<std::vector<double>> results(nev, std::vector<double>(4, 0.0));
-    results[0] = {1.0, 1, 1.0, inf};  // for first event
+    results[0] = {0.0, 0, 0.0, inf};  // for first event
     double A0 = pow(10, alpha0);
     for (size_t i = 1; i < nev; ++i) {
         double count = 0.0, avg_lognnd = 0.0;

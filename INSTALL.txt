@@ -1,3 +1,8 @@
+
+# REQUIREMENTS:
+G++ version >= 10.2.1
+BOOST librairies (libboost-dev) version >= 1.79
+
 # To compile on Linux:
 make all
 
