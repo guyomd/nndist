@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstddef>
 #include <valarray>
+#include <string>
 #include "nnstats.h"
 
 std::valarray<double> greatCircleDistance(double lat1, 
@@ -44,7 +45,8 @@ public:
                                                double d,
                                                size_t npert, 
                                                double p = 0.5, 
-                                               double q = 0.5);
+                                               double q = 0.5,
+                                               std::string t_sampling_mode = "synthetic");
     
     std::vector<double> extractBgndEventTimes(const std::vector<std::vector<double>>& decluster_results);
 

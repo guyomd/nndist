@@ -17,4 +17,5 @@ parameter_q: 0.5
 parameter_eta0: 0.1
 parameter_alpha0: 0.0
 parameter_npert: 10000 
+time_perturbation_mode_[synthetic/permute]: synthetic
 output_file: output.txt 

@@ -6,6 +6,7 @@
 #include <random>
 #include <valarray>
 #include <omp.h>
+#include <string>
 #include "arrayutils.h"
 #include "nnanalysis.h"
 #include "progressbar.hpp"
@@ -143,7 +144,8 @@ size_t Hypocenters::size() const {
 }
 
 std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alpha0, double w, 
-                                                        double d, size_t npert, double p, double q) 
+                                                        double d, size_t npert, double p, double q,
+                                                        std::string t_sampling_mode) 
 {
     std::cout << ">> Applying nearest-neighbor declustering (Zaliapin & Ben-Zion, 2020)" << std::endl;
     std::cout << ">> Parameters: " << std:: endl;
@@ -175,6 +177,7 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
 
     std::cout << "   -- " << npert; 
     std::cout << " random permutations of background events..." << std::endl;
+    std::cout << "   -- randomization mode for origin times: " + t_sampling_mode << std::endl;
     #pragma omp parallel for schedule(dynamic)
     for (size_t k = 0; k < npert; ++k) {
         // Display progress:
@@ -189,12 +192,18 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
         std::valarray<double> local_t_k = t_k;  // local copy
         
 
-        // Random permutations of magnitudes (sur copie locale):
+        // Random permutations of magnitudes (on local copy):
         std::shuffle(std::begin(local_m_k), std::end(local_m_k), local_rng); 
         
-        // Draw uniform random occurrence times between tmin and tmax:
-        for (auto& t : local_t_k)
-            t = tmin + (tmax - tmin) * unif(local_rng);
+        if (t_sampling_mode == "synthetic") {
+            // Draw uniform random occurrence times between tmin and tmax:
+            for (auto& t : local_t_k)
+                t = tmin + (tmax - tmin) * unif(local_rng);
+        } 
+        else if (t_sampling_mode == "permute") {
+            // Random permutations of origin times (on local copy):
+            std::shuffle(std::begin(local_t_k), std::end(local_t_k), local_rng);
+        }
         
         for (size_t i = 1; i < nev; ++i) {
             std::valarray<bool> cond(nm);
