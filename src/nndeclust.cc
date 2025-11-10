@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     std::string outfile = prefix + "_declust" + suffix;
     
     // Not sure we need all of these:
-    char unit = params["unit_for_geog_coordinates_[km/degrees]"][0];
+    char unit = params["unit_for_geog_coordinates_[km,degrees]"][0];
     double d = std::stod( params["fractal_dimension"]);
     double p = std::stod( params["parameter_p"]);
     double q = std::stod( params["parameter_q"]);
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     double eta0 = std::stod( params["parameter_eta0"]);
     double alpha0 = std::stod( params["parameter_alpha0"]);
     size_t npert = std::stod( params["parameter_npert"]);
-    std::string t_mode = params["time_perturbation_mode_[synthetic/permute]"];
+    std::string t_mode = params["time_perturbation_mode_[synthetic,permute]"];
 
     // Load catalogue and nearest-neighbor distances:
     std::vector<std::vector<double>> columns;
