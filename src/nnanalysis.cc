@@ -256,8 +256,8 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
         avg_lognnd = (count > 0) ? avg_lognnd / count : inf;  // Average log10(nearest-neighbor distance)
         double prox = A0 * pow(10, log10(nndist[i]) - avg_lognnd);
         double prob = std::min(prox, 1.0);
-        double isbng = static_cast<double>(prox >= unif(rng));
-        results[i] = {prob, isbng, prox, pow(10, avg_lognnd)};  // [prob_bgnd, is_bgnd, norm. prox., avg_nnd]
+        //double isbng = static_cast<double>(prob >= unif(rng));
+        results[i] = {prob, prox, pow(10, avg_lognnd)};  // [prob_bgnd, norm. prox., avg_nnd]
     }
     return results;
 }
@@ -265,19 +265,21 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
 
 std::vector<double> Hypocenters::extractBgndEventTimes(const std::vector<std::vector<double>>& decluster_results) 
 {
-     /**
-     * Extract background event times from decluster results
+     /*
+     * Extract background event times by random thinning from original catalogue and declustering results
      * 
      * @param dates All event occurrence times
-     * @param decluster_results Results from decluster method (each element: [prob_bgnd, is_bgnd, norm_prox, avg_nnd])
+     * @param decluster_results Results from decluster method (each element: [prob_bgnd, norm_prox, avg_nnd])
      * @return Vector of occurrence times for events where is_bgnd == 1 (True)
      */
     std::vector<double> background_times;
     size_t n = std::min(dates.size(), decluster_results.size());
+    std::uniform_real_distribution<double> unif(0.0, 1.0);
+    thread_local std::mt19937 rng(std::random_device{}());
     
     for (size_t i = 0; i < n; ++i) {
-        // Check if is_bgnd (index 1) is True (≈ 1.0)
-        if (decluster_results[i].size() >= 2 && decluster_results[i][1] > 0.5) {
+        // Random thinning: Keep event if prob_bgnd[i] >= rand. sample U(0, 1):
+        if (decluster_results[i][0] >= unif(rng)) {
             background_times.push_back(dates[i]);
         }
     }
@@ -326,37 +328,76 @@ StatTestResult Hypocenters::testBgndStationarityKS(const std::vector<double>& ba
 
 
 void Hypocenters::performStationarityTests(const std::vector<std::vector<double>>& decluster_results,
-                                           double alpha) 
+                                           double alpha, int n) 
 {
-    std::cout << "\n### STATIONARITY TESTS FOR BACKGROUND EVENTS ###" << std::endl;
-    
-    // Extract background events info
-    std::vector<double> background_times = extractBgndEventTimes(decluster_results);
-    
-    std::cout << "Total events: " << dates.size() << std::endl;
-    std::cout << "Background events: " << background_times.size() << std::endl;
-    if (background_times.size() > 0) {
-        std::cout << "Background event rate: " << 
-                     static_cast<double>(background_times.size()) / dates.size() * 100.0 
-                  << "%" << std::endl;
-        std::cout << "Time span: " << background_times.front() << " to " 
-                  << background_times.back() << std::endl;
-    }
-    
-    if (background_times.size() < 2) {
-        std::cout << "\nInsufficient background events for statistical tests." << std::endl;
-        return;
-    }
-    
-    // Perform Brown-Zhao tests:
-    StatTestResult bz_result = testBgndStationarityBrownZhao(background_times, 10, alpha);
-    bz_result.printTestResults();
-    
-    bz_result = testBgndStationarityBrownZhao(background_times, 100, alpha);
-    bz_result.printTestResults();
+    std::vector<double> bz1(n), bz2(n), ks(n);
+    StatTestResult bz1_result, bz2_result, ks_result;
 
-    // // Perform Kolmogorov-Smirnov test
-    StatTestResult ks_result = testBgndStationarityKS(background_times, alpha);
-    ks_result.printTestResults();
+    std::cout << "\n### STATIONARITY TESTS FOR BACKGROUND EVENTS ###" << std::endl;
+    std::cout << "-- Based on " << n << " random background catalogues" << std::endl;
     
+    for (size_t i = 0; i < n; ++i) {
+	// Extract a realization of background events:
+	std::vector<double> background_times = extractBgndEventTimes(decluster_results);
+	
+	/*
+        std::cout << "Total events: " << dates.size() << std::endl;
+	std::cout << "Background events: " << background_times.size() << std::endl;
+	*/
+        if (background_times.size() > 0) {
+	    /*
+            std::cout << "Background event rate: " << 
+			 static_cast<double>(background_times.size()) / dates.size() * 100.0 
+		      << "%" << std::endl;
+	    std::cout << "Time span: " << background_times.front() << " to " 
+		      << background_times.back() << std::endl;
+            */
+	}
+	
+	if (background_times.size() < 2) {
+	    std::cout << "\nInsufficient background events for statistical tests." << std::endl;
+	    return;
+	}
+	
+	// Perform Brown-Zhao tests:
+	bz1_result = testBgndStationarityBrownZhao(background_times, 10, alpha);
+        bz1[i] = bz1_result.p_value;
+	bz2_result = testBgndStationarityBrownZhao(background_times, 100, alpha);
+        bz2[i] = bz2_result.p_value;
+
+	// // Perform Kolmogorov-Smirnov test
+	ks_result = testBgndStationarityKS(background_times, alpha);
+        ks[i] = ks_result.p_value;
+    }
+    
+    if (n > 1) {
+	// Compute median, 2.5% and 97.5% percentiles for each test:
+	bz1_result.p_range[0] = getPercentile(bz1, 2.5);
+	bz1_result.p_range[1] = getPercentile(bz1, 50.0);
+	bz1_result.p_range[2] = getPercentile(bz1, 97.5);
+        bz1_result.p_value = bz1_result.p_range[1]; // Replace by median p-value
+        bz1_result.is_stationary = (bz1_result.p_value > alpha);  // Update result
+	bz1_result.printTestResults();
+
+	bz2_result.p_range[0] = getPercentile(bz2, 2.5);
+	bz2_result.p_range[1] = getPercentile(bz2, 50.0);
+	bz2_result.p_range[2] = getPercentile(bz2, 97.5);
+        bz2_result.p_value = bz2_result.p_range[1]; 
+        bz2_result.is_stationary = (bz2_result.p_value > alpha); 
+	bz2_result.printTestResults();
+
+	ks_result.p_range[0] = getPercentile(ks, 2.5);
+	ks_result.p_range[1] = getPercentile(ks, 50.0);
+	ks_result.p_range[2] = getPercentile(ks, 97.5);
+        ks_result.p_value = ks_result.p_range[1]; 
+        ks_result.is_stationary = (ks_result.p_value > alpha); 
+	ks_result.printTestResults();
+    } 
+    else {
+	bz1_result.printTestResults();
+	bz2_result.printTestResults();
+	ks_result.printTestResults();
+    }
+    
+	
 }

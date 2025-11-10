@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
     double alpha0 = std::stod( params["parameter_alpha0"]);
     size_t npert = std::stod( params["parameter_npert"]);
     std::string t_mode = params["time_perturbation_mode_[synthetic,permute]"];
+    int ntests = std::stoi(params["nb_realizations_for_stats_tests"]);
 
     // Load catalogue and nearest-neighbor distances:
     std::vector<std::vector<double>> columns;
@@ -58,11 +59,11 @@ int main(int argc, char* argv[]) {
         
         // Perform stationarity tests on background events:
         double test_alpha = 0.05;
-        events.performStationarityTests(results, test_alpha);
+        events.performStationarityTests(results, test_alpha, ntests);
     }
     
     // Write results to output file:
-    std::vector<std::string> results_headers = {"p_bgnd", "is_bgnd", "norm_prox", "avg_nn_distance"};
+    std::vector<std::string> results_headers = {"p_bgnd", "norm_prox", "avg_nn_distance"};
     if (writeToCSV(outfile, events, results, results_headers, ';')) {
         std::cout << ">> Results saved in file " << outfile << std::endl;
     }

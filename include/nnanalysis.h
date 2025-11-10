@@ -57,7 +57,7 @@ public:
     StatTestResult testBgndStationarityKS(const std::vector<double>& background_times,
                                           double alpha);
     void performStationarityTests(const std::vector<std::vector<double>>& decluster_results,
-                                  double alpha = 0.05);
+                                  double alpha = 0.05, int n = 1);
     
     size_t size() const;
 

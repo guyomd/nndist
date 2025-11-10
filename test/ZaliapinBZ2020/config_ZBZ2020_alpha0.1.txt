@@ -18,4 +18,5 @@ parameter_eta0: 0.1
 parameter_alpha0: 0.1
 parameter_npert: 10000 
 time_perturbation_mode_[synthetic,permute]: synthetic
+nb_realizations_for_stats_tests: 100
 output_file: output_ZBZ2020_alpha0.1.txt 

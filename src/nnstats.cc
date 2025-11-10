@@ -5,10 +5,24 @@
 #include <numeric>
 #include <string>
 #include <cstdlib>
+#include <iterator>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/kolmogorov_smirnov.hpp>
 #include "nnstats.h"
 
+
+
+double getPercentile(const std::vector<double>& samples, double percentile)
+{
+    std::vector<double> values(samples);  
+
+    // Define index of percentile position based on vector size:
+    const std::size_t pos = (percentile / 100) * values.size();   
+    auto pth = values.begin() + pos;
+    std::nth_element(values.begin(), pth, values.end());  
+    return values[pos];
+
+}
 
 
 double chiSquarePValue(double testStat, int degreesOfFreedom)
@@ -122,8 +136,14 @@ std::vector<double> PoissonStationarityTests::sortAndClean(const std::vector<dou
 void StatTestResult::printTestResults() 
 {
     std::cout << "\n=== " << test_name << " ===" << std::endl;
-    std::cout << "Test statistic: " << statistic << std::endl;
-    std::cout << "P-value: " << p_value << std::endl;
+    if ((p_range[0] == -1.0) and (p_range[1] == -1.0) and (p_range[2] == -1.0)) {
+        std::cout << "Test statistic: " << statistic << std::endl;
+        std::cout << "P-value: " << p_value << std::endl;
+    }
+    else {
+        std::cout << "P-value:  median = " << p_range[1] << ", range = [" << p_range[0] 
+                  << ", " << p_range[2] << "]  (Q2.5%, Q97.5%)" << std::endl;
+    }
     std::cout << "Result: ";
     if (is_stationary) {
         std::cout << "FAIL TO REJECT null hypothesis (process appears stationary)" << std::endl;
