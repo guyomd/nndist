@@ -195,7 +195,7 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
         // Random permutations of magnitudes (on local copy):
         std::shuffle(std::begin(local_m_k), std::end(local_m_k), local_rng); 
         
-        if (t_sampling_mode == "synthetic") {
+        if ((t_sampling_mode == "uniform") || (t_sampling_mode == "synthetic")) {
             // Draw uniform random occurrence times between tmin and tmax:
             for (auto& t : local_t_k)
                 t = tmin + (tmax - tmin) * unif(local_rng);
