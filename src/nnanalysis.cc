@@ -242,7 +242,7 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
     std::cerr << std::endl;  // Add line break when progress bar is completed
     
     thread_local std::mt19937 rng(std::random_device{}());
-    std::vector<std::vector<double>> results(nev, std::vector<double>(4, 0.0));
+    std::vector<std::vector<double>> results(nev, std::vector<double>(3, 0.0));
     results[0] = {1.0, inf, inf};  // for first event (prob_bgnd, norm. prox., avg. nn-distance)
     double A0 = pow(10, alpha0);
     for (size_t i = 1; i < nev; ++i) {
