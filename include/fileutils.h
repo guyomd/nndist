@@ -19,3 +19,6 @@ bool writeToCSV(const std::string& filename,
 
 std::map<std::string, std::string> readParametersFile(const std::string& filename);
 
+std::vector<double> parseAlpha0Values(const std::string& alpha0_param);
+
+
