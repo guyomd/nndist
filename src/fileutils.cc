@@ -103,7 +103,7 @@ bool writeToCSV(const std::string& filename, const Hypocenters& events,
     }
 
     // Write header
-    std::string sep = std::string(1, delimiter) + " ";
+    std::string sep = std::string(1, delimiter);
     size_t nval = values_headers.size();
     outfile << "floating_date" << sep
             << "latitude" << sep
