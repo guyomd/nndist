@@ -143,9 +143,9 @@ size_t Hypocenters::size() const {
     return nev;
 }
 
-std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alpha0, double w, 
-                                                        double d, size_t npert, double p, double q,
-                                                        std::string t_sampling_mode) 
+std::vector<std::vector<std::vector<double>>> Hypocenters::decluster(double eta0, const std::vector<double>& alpha0_values, double w, 
+                                                                        double d, size_t npert, double p, double q,
+                                                                        std::string t_sampling_mode) 
 {
     std::cout << ">> Applying nearest-neighbor declustering (Zaliapin & Ben-Zion, 2020)" << std::endl;
     std::cout << ">> Parameters: " << std:: endl;
@@ -154,7 +154,16 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
     std::cout << "   -- p = " << p << std::endl;
     std::cout << "   -- q = " << q << std::endl;
     std::cout << "   -- eta0 = " << eta0 << std::endl;
-    std::cout << "   -- alpha0 = " << alpha0 << std::endl;
+    if (alpha0_values.size() == 1) {
+        std::cout << "   -- alpha0 = " << alpha0_values[0] << std::endl;
+    } else {
+        std::cout << "   -- alpha0 values = ";
+        for (size_t ai = 0; ai < alpha0_values.size(); ++ai) {
+            std::cout << alpha0_values[ai];
+            if (ai + 1 < alpha0_values.size()) std::cout << ", ";
+        }
+        std::cout << std::endl;
+    }
     std::vector<size_t> i0 = indicesGE<double>(nndist, eta0);
     std::sort(i0.begin(), i0.end());
     size_t nm = i0.size(), idx;
@@ -241,25 +250,36 @@ std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alph
     }
     std::cerr << std::endl;  // Add line break when progress bar is completed
     
-    thread_local std::mt19937 rng(std::random_device{}());
-    std::vector<std::vector<double>> results(nev, std::vector<double>(3, 0.0));
-    results[0] = {1.0, inf, inf};  // for first event (prob_bgnd, norm. prox., avg. nn-distance)
-    double A0 = pow(10, alpha0);
-    for (size_t i = 1; i < nev; ++i) {
-        double count = 0.0, avg_lognnd = 0.0;
-        for (size_t k = 0; k < npert; ++k) {
-            if (std::isfinite(nnreal[k][i])) {
-                count += 1.0;
-                avg_lognnd += log10(nnreal[k][i]);
+    std::vector<std::vector<std::vector<double>>> all_results(alpha0_values.size(), std::vector<std::vector<double>>(nev, std::vector<double>(3, 0.0)));
+    for (size_t ai = 0; ai < alpha0_values.size(); ++ai) {
+        auto& results = all_results[ai];
+        results[0] = {0.0, 0.0, inf};  // for first event
+        double A0 = pow(10, alpha0_values[ai]);
+        for (size_t i = 1; i < nev; ++i) {
+            double count = 0.0, avg_lognnd = 0.0;
+            for (size_t k = 0; k < npert; ++k) {
+                if (std::isfinite(nnreal[k][i])) {
+                    count += 1.0;
+                    avg_lognnd += log10(nnreal[k][i]);
+                }
             }
+            avg_lognnd = (count > 0) ? avg_lognnd / count : inf;  // Average log10(nearest-neighbor distance)
+            double prox = A0 * pow(10, log10(nndist[i]) - avg_lognnd);
+            double prob = std::min(prox, 1.0);
+            results[i] = {prob, prox, pow(10, avg_lognnd)};
         }
-        avg_lognnd = (count > 0) ? avg_lognnd / count : inf;  // Average log10(nearest-neighbor distance)
-        double prox = A0 * pow(10, log10(nndist[i]) - avg_lognnd);
-        double prob = std::min(prox, 1.0);
-        //double isbng = static_cast<double>(prob >= unif(rng));
-        results[i] = {prob, prox, pow(10, avg_lognnd)};  // [prob_bgnd, norm. prox., avg_nnd]
     }
-    return results;
+    return all_results;
+}
+
+
+std::vector<std::vector<double>> Hypocenters::decluster(double eta0, double alpha0, double w, 
+                                                        double d, size_t npert, double p, double q,
+                                                        std::string t_sampling_mode) 
+{
+    auto all_results = decluster(eta0, std::vector<double>{alpha0}, w, d, npert, p, q, t_sampling_mode);
+    if (all_results.empty()) return {};
+    return all_results[0];
 }
 
 
@@ -333,7 +353,7 @@ void Hypocenters::performStationarityTests(const std::vector<std::vector<double>
     std::vector<double> bz1(n), bz2(n), ks(n);
     StatTestResult bz1_result, bz2_result, ks_result;
 
-    std::cout << "\n### STATIONARITY TESTS FOR BACKGROUND EVENTS ###" << std::endl;
+    std::cout << ">> Stationarity Tests for background events" << std::endl;
     std::cout << "-- Based on " << n << " random background catalogues" << std::endl;
     
     for (size_t i = 0; i < n; ++i) {
