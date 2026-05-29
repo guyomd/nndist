@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 #include <iomanip>
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include "strutils.h"
 #include "nnanalysis.h"
 
@@ -122,34 +125,9 @@ bool writeToCSV(const std::string& filename, const Hypocenters& events,
         return false;
     }
  
-    // Print first line using mixed fixed-width and scientific notations:
-    outfile << std::fixed 
-            << std::setprecision(12) << events.dates[0] << sep
-            << std::setprecision(6) << events.lats[0] << sep
-            << std::setprecision(6) << events.lons[0] << sep
-            << std::setprecision(2) << events.mags[0] << sep
-            << std::setprecision(3) << events.deps[0] << sep
-            << std::scientific
-            << std::setprecision(2) << events.nndist[0] << sep
-            << std::setprecision(2) << events.R[0] << sep
-            << std::setprecision(2) << events.T[0] << sep
-            << std::fixed
-            << std::setprecision(0) << events.parent_idx[0] << sep
-            << std::setprecision(2) << events.parent_mag[0];
-    if (nval > 1) {
-        outfile << sep 
-                << std::fixed 
-                << std::setprecision(2) << values[0][0] << sep  // 1.O
-                << std::setprecision(0) << values[0][1] << sep  // 1
-                << std::scientific
-                << std::setprecision(2) << values[0][2] << sep  // 1.0
-                << std::setprecision(2) << values[0][3];        // 1E99        
-    }
-    outfile << std::endl;
-    
     // Then, print other lines using fixed-width notation:
     outfile << std::fixed;  
-    for (size_t i = 1; i < events.nev; ++i) {
+    for (size_t i = 0; i < events.nev; ++i) {
         outfile << std::setprecision(12) << events.dates[i] << sep
                 << std::setprecision(6) << events.lats[i] << sep
                 << std::setprecision(6) << events.lons[i] << sep
@@ -163,9 +141,8 @@ bool writeToCSV(const std::string& filename, const Hypocenters& events,
         if (nval > 1) {
             outfile << sep 
                     << std::setprecision(6) << values[i][0] << sep  // prob. to be a background event
-                    << std::setprecision(0) << values[i][1] << sep  // Background event flag (0/1)
-                    << std::setprecision(14) << values[i][2] << sep  // Normalized proximity 
-                    << std::setprecision(14) << values[i][3];        // Avg. nearest-neighbor distance over permutations
+                    << std::setprecision(14) << values[i][1] << sep  // Normalized proximity 
+                    << std::setprecision(14) << values[i][2];        // Avg. nearest-neighbor distance over permutations
         }
         outfile << std::endl;
     }
@@ -196,4 +173,50 @@ std::map<std::string, std::string> readParametersFile(const std::string& filenam
     }
     infile.close();
     return params;
+}
+
+std::vector<double> parseAlpha0Values(const std::string& alpha0_param) {
+    std::vector<double> values;
+    std::string trimmed = trim(alpha0_param);
+    if (trimmed.empty()) {
+        return values;
+    }
+
+    if (trimmed.find(',') != std::string::npos) {
+        auto tokens = splitString(trimmed, ',');
+        for (const auto& token : tokens) {
+            values.push_back(std::stod(token));
+        }
+        return values;
+    }
+
+    size_t colon_count = std::count(trimmed.begin(), trimmed.end(), ':');
+    if (colon_count == 2) {
+        auto parts = splitString(trimmed, ':');
+        if (parts.size() != 3) {
+            throw std::runtime_error("Invalid alpha0 range syntax: " + alpha0_param);
+        }
+        double start = std::stod(parts[0]);
+        double step = std::stod(parts[1]);
+        double end = std::stod(parts[2]);
+        if (step == 0.0) {
+            throw std::runtime_error("Alpha0 range step must not be zero.");
+        }
+        if ((step > 0.0 && start > end) || (step < 0.0 && start < end)) {
+            throw std::runtime_error("Alpha0 range bounds are inconsistent with step direction.");
+        }
+        double value = start;
+        const double eps = std::abs(step) * 1e-9;
+        while ((step > 0.0 && value <= end + eps) || (step < 0.0 && value >= end - eps)) {
+            values.push_back(value);
+            value += step;
+        }
+        if (!values.empty() && std::abs(values.back() - end) > eps) {
+            values.push_back(end);
+        }
+        return values;
+    }
+
+    values.push_back(std::stod(trimmed));
+    return values;
 }

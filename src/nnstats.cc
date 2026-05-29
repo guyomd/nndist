@@ -135,7 +135,7 @@ std::vector<double> PoissonStationarityTests::sortAndClean(const std::vector<dou
 
 void StatTestResult::printTestResults() 
 {
-    std::cout << "\n=== " << test_name << " ===" << std::endl;
+    std::cout << "=== " << test_name << " ===" << std::endl;
     if ((p_range[0] == -1.0) and (p_range[1] == -1.0) and (p_range[2] == -1.0)) {
         std::cout << "Test statistic: " << statistic << std::endl;
         std::cout << "P-value: " << p_value << std::endl;

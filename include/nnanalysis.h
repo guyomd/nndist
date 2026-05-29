@@ -47,6 +47,14 @@ public:
                                                double p = 0.5, 
                                                double q = 0.5,
                                                std::string t_sampling_mode = "synthetic");
+    std::vector<std::vector<std::vector<double>>> decluster(double eta0,
+                                                            const std::vector<double>& alpha0_values,
+                                                            double w,
+                                                            double d,
+                                                            size_t npert,
+                                                            double p = 0.5,
+                                                            double q = 0.5,
+                                                            std::string t_sampling_mode = "synthetic");
     
     std::vector<double> extractBgndEventTimes(const std::vector<std::vector<double>>& decluster_results);
 
