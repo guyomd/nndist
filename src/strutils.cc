@@ -39,14 +39,13 @@ std::string formatAlpha0(double alpha0) {
     std::string text = oss.str();
     if (text.find('.') != std::string::npos) {
         while (!text.empty() && text.back() == '0') {
-            text.pop_back();
+            if (text.at(text.size() - 2) != '.') {
+                text.pop_back();
+            } 
+            else {
+                break;
+            }
         }
-        if (!text.empty() && text.back() == '.') {
-            text.pop_back();
-        }
-    }
-    if (text.empty()) {
-        text = "0";
     }
     std::replace(text.begin(), text.end(), '.', 'p');
     return text;
