@@ -251,23 +251,28 @@ std::vector<std::vector<std::vector<double>>> Hypocenters::decluster(double eta0
     std::cerr << std::endl;  // Add line break when progress bar is completed
     
     std::vector<std::vector<std::vector<double>>> all_results(alpha0_values.size(), std::vector<std::vector<double>>(nev, std::vector<double>(3, 0.0)));
+    // First, set results for the first event:
     for (size_t ai = 0; ai < alpha0_values.size(); ++ai) {
         auto& results = all_results[ai];
-        results[0] = {0.0, 0.0, inf};  // for first event
-        double A0 = pow(10, alpha0_values[ai]);
-        for (size_t i = 1; i < nev; ++i) {
-            double count = 0.0, avg_lognnd = 0.0;
-            for (size_t k = 0; k < npert; ++k) {
-                if (std::isfinite(nnreal[k][i])) {
-                    count += 1.0;
-                    avg_lognnd += log10(nnreal[k][i]);
-                }
-            }
-            avg_lognnd = (count > 0) ? avg_lognnd / count : inf;  // Average log10(nearest-neighbor distance)
-            double prox = A0 * pow(10, log10(nndist[i]) - avg_lognnd);
-            double prob = std::min(prox, 1.0);
-            results[i] = {prob, prox, pow(10, avg_lognnd)};
-        }
+        results[0] = {0.0, 0.0, inf};   
+    }
+    // Then, fill results for all other events:
+    for (size_t i = 1; i < nev; ++i) {
+        double count = 0.0, avg_lognnd = 0.0;
+	for (size_t k = 0; k < npert; ++k) {
+	    if (std::isfinite(nnreal[k][i])) {
+		count += 1.0;
+		avg_lognnd += log10(nnreal[k][i]);
+	    }
+	}
+	avg_lognnd = (count > 0) ? avg_lognnd / count : inf;  // Average log10(nearest-neighbor distance)
+	double prox = pow(10, log10(nndist[i]) - avg_lognnd);  // normalized proximity
+	for (size_t ai = 0; ai < alpha0_values.size(); ++ai) {
+	    auto& results = all_results[ai];
+	    double A0 = pow(10, alpha0_values[ai]);
+	    double prob = std::min(A0 * prox, 1.0);
+	    results[i] = {prob, prox, pow(10, avg_lognnd)};
+	}
     }
     return all_results;
 }
